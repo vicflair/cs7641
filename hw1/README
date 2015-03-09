@@ -1,0 +1,44 @@
+README
+
+
+### To Run Code ###
+In order to run the code, simply use the following bash command:
+$ python main.py
+
+Alternatively, you can open up python and run:
+>>> from main import *
+>>> main()
+
+This trains and tests 5 different classifiers on both data sets, calculating
+their performance as a function on training set size. Then it plots the results.
+The code currently does not use the whole data set, but nonethless uses a very
+large amount. Thus, it may take VERY long to run.
+
+If you want to reduce the sample sizes to decrease the run time (normally it's very
+long) modify lines 78, 139, and 141. Be warned however that the 7 labels of the
+forest cover type data set are not uniformly distributed, and if the sample sizes
+are too small and you get an unlucky draw, you won't have all 7 forest cover types
+represented in your training set. Consequently, the ANN training module will have
+an error.
+
+### Software information ###
+Based on Python 2.7.2
+
+Python modules used include:
+numpy
+pandas
+pylab
+matplotlib
+pybrain
+sklearn
+
+### Folders ###
+There are 4 folders included:
+
+code: contains the single code file, main.py
+data: contains the data sets
+results: contains the results from my own experiments, which are used to
+         generate the plots in my report
+graphics: contains the plots I used in my report
+
++ 1 file: vma3-analysis.pdf, which is my report
