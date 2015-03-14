@@ -14,8 +14,8 @@ class ANN():
     def __init__(self, num_hidden=5, momentum=0.1, weightdecay=0.01, 
                  verbose=False):
         self.num_hidden = num_hidden
-        self.train_file = 'imgseg/segmentation.train'
-        self.test_file = 'imgseg/segmentation.test'
+        self.train_file = 'data/segmentation.train'
+        self.test_file = 'data/segmentation.test'
         self.train = self.load_data(self.train_file)
         self.test = self.load_data(self.test_file)
         self.network = self.make_network(num_hidden)
