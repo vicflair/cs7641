@@ -201,10 +201,11 @@ def demo_alg(opt_alg=None):
 
 
 def main():
+    """
     # Part 1: Get performance data for all 4 optimization algorithms on
     # all problems except ANN weight selection. Pickle results.
     algs = [hc, sa, ga, mimic]
-    iter = [200, 200, 20, 10]
+    iter = [200, 200, 20, 5]
     lbls = ['Hill climbing', 'Simulated annealing', 'Genetic algorithm',
             'MIMIC']
     # Four peaks
@@ -222,15 +223,16 @@ def main():
         pickle.dump((sols, fits, runt, labels), f)
 
     # K colors
+    print 'KColors'
     kc = KColors()
     sols, fits, runt, labels = compare_algorithms(prob=kc,
         algorithms=algs, iterations=iter, labels=lbls)
     with open('kcolors.pickle', 'w') as f:
         pickle.dump((sols, fits, runt, labels), f)
-    
+    """
     # Part 2: Get performance data for HC, SA, and GA optimization
     # algorithms on the ANN weight selection problem. Pickle results.
-    algs = [hc, sa, gc]
+    algs = [hc, sa, ga]
     iter = [200, 200, 20]
     lbls = ['Hill climbing', 'Simulated annealing', 'Genetic algorithm']
     

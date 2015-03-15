@@ -165,7 +165,7 @@ def ga(P, popsize=100, mutprob=0.3, elite=0.3, maxiter=100):
     return ranked[0]
 
 
-def mimic(P, n_iter=80, samples=200, percentile=0.9):
+def mimic(P, n_iter=100, samples=50, percentile=0.9):
     """MIMIC algorithm with -n_iter_ iterations, -samples- # of samples, and
     -percentile- percentile cutoff."""
     mmc = Mimic(domain=P.domain, fitness_function=P.fitf, samples=samples,
@@ -176,10 +176,10 @@ def mimic(P, n_iter=80, samples=200, percentile=0.9):
         print 'best fitness: {}'.format(max(map(P.fitf, sols)))
     
     # Bring valid samples to their local optima via hill climbing
-    sols = [hc(P, sol) for sol in sols if P.valid(sol)]
+    vsols = [hc(P, sol) for sol in sols if P.valid(sol)]
 
     # Return the best individual
-    scores = [(P.fitf(v), v) for v in sols] 
+    scores = [(P.fitf(v), v) for v in vsols] 
     scores.sort(key=lambda x:x[0], reverse=True)
     ranked = [v for (s, v) in scores]
     return sols[0]

@@ -113,9 +113,13 @@ class KColors():
         return [random.randint(0, 1)
                 for i in range(len(self.domain))]
 
+    def valid(self, x):
+        return True
+
     def neighbors(self, x):
         """Generate list of neighbors to solution x."""
         neighbors = []
+        x = list(x)
         for i in range(len(self.domain)):
             if x[i] == 0:
                 neighbors.append(x[0:i] + [1] + x[i+1:])
@@ -309,6 +313,8 @@ class Knapsack():
                 return overflow
             elif growth == "log":
                 return math.log(overflow)
+        else:
+            return 0
 
     def crossover(self, x, y):
         """Crossover with genetic repairing."""
