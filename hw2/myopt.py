@@ -52,6 +52,9 @@ def hc(P, sol=None):
         if best <= current:
             break
         else:
+            # Verbose
+            print 'fitness: {} ==> {}'.format(current, best) 
+
             # Randomly choose among best neighbors
             i = random.randint(0, len(best_neighbors)-1)
             sol = best_neighbors[i]
@@ -95,6 +98,9 @@ def sa(P, T=10000.0, cool=0.97):
         # Is it better, or does it make the probability cutoff?
         if (eb > ea) or (math.log(np.random.rand()) < log_p):
             vec = vecb
+
+        # Verbose
+        print 'fitness: {} ==> {}'.format(ea, eb)
 
         # Decrease the temperature
         T = T*cool
@@ -155,6 +161,9 @@ def ga(P, popsize=100, mutprob=0.3, elite=0.3, maxiter=100):
                 crossed = crossover(ranked[c1], ranked[c2])
                 pop.append(crossed)
     
+        # Verbose
+        print '{}: {}'.format(i, P.fitf(ranked[0]))
+
     # Bring elite individuals to their local optima via hill climbing
     pop = [hc(P, v) for v in pop]
 

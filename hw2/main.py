@@ -6,7 +6,7 @@ import pickle
 from myopt import *  # Optimization algorithms
 from probs import *  # Problems to optimize
 from time import time
-
+from functools import partial
 
 class Stats():
     """Simple contaner for holding stats."""
@@ -26,6 +26,7 @@ def get_stats(prob=None, alg=None, iter=3):
     fits = []  # Fitness scores
     runt = []  # Runtimes
     for i in range(iter):
+        print 'iter: {}'.format(i)
         start = time()
         sol =  alg(P)
         runt.append(time() - start)
@@ -75,14 +76,36 @@ def analyze_four_peaks():
     plt.ylim(90,200)
     plt.title('Four Peaks - Distribution of fitness scores by algorithm')
     plt.ylabel('Fitness score')
-    plt.savefig('Four Peaks - Fitness scores.png')
+    plt.savefig('plots/Four Peaks - Fitness scores.png')
 
     # Plot run times of different algorithms
     plt.figure()
     plt.boxplot(runt, labels=labels)
     plt.title('Four Peaks - Distribution of runtimes by algorithm')
     plt.ylabel('Runtime [secs]')
-    plt.savefig('Four Peaks - Runtimes.png')
+    plt.savefig('plots/Four Peaks - Runtimes.png')
+
+    # Print training fitness statistics
+    print '#'*10 + ' Training fitness ' + '#'*10
+    for fit, lbl in zip(fits, labels):
+        print lbl
+        print '# Runs: {}'.format(len(fit))
+        print 'Min: {}'.format(min(fit))
+        print 'Max: {}'.format(max(fit))
+        print 'Mean: {}'.format(np.mean(fit))
+        print 'Median: {}'.format(np.median(fit))
+        print ''
+
+    # Print run time statistics
+    print '#'*10 + ' Run times ' + '#'*10
+    for run, lbl in zip(runt, labels):
+        print lbl
+        print '# Runs: {}'.format(len(run))
+        print 'Min: {}'.format(min(run))
+        print 'Max: {}'.format(max(run))
+        print 'Mean: {}'.format(np.mean(run))
+        print 'Median: {}'.format(np.median(run))
+        print ''
 
 
 def analyze_knapsack():    
@@ -97,14 +120,36 @@ def analyze_knapsack():
     plt.boxplot(fits, labels=labels)
     plt.title('Knapsack - Distribution of fitness scores by algorithm')
     plt.ylabel('Fitness score')
-    plt.savefig('Knapsack - Fitness scores.png')
+    plt.savefig('plots/Knapsack - Fitness scores.png')
 
     # Compare run times of different algorithms
     plt.figure()
     plt.boxplot(runt, labels=labels)
     plt.title('Knapsack - Distribution of runtimes by algorithm')
     plt.ylabel('Runtime [secs]')
-    plt.savefig('Knapsack - Runtimes.png')
+    plt.savefig('plots/Knapsack - Runtimes.png')
+
+    # Print training fitness statistics
+    print '#'*10 + ' Training fitness ' + '#'*10
+    for fit, lbl in zip(fits, labels):
+        print lbl
+        print '# Runs: {}'.format(len(fit))
+        print 'Min: {}'.format(min(fit))
+        print 'Max: {}'.format(max(fit))
+        print 'Mean: {}'.format(np.mean(fit))
+        print 'Median: {}'.format(np.median(fit))
+        print ''
+
+    # Print run time statistics
+    print '#'*10 + ' Run times ' + '#'*10
+    for run, lbl in zip(runt, labels):
+        print lbl
+        print '# Runs: {}'.format(len(run))
+        print 'Min: {}'.format(min(run))
+        print 'Max: {}'.format(max(run))
+        print 'Mean: {}'.format(np.mean(run))
+        print 'Median: {}'.format(np.median(run))
+        print ''
 
 
 def analyze_k_colors():    
@@ -119,14 +164,36 @@ def analyze_k_colors():
     plt.boxplot(fits, labels=labels)
     plt.title('K colors - Distribution of fitness scores by algorithm')
     plt.ylabel('Fitness score')
-    plt.savefig('K colors - Fitness scores.png')
+    plt.savefig('plots/K colors - Fitness scores.png')
 
     # Compare run times of different algorithms
     plt.figure()
     plt.boxplot(runt, labels=labels)
     plt.title('K colors - Distribution of runtimes by algorithm')
     plt.ylabel('Runtime [secs]')
-    plt.savefig('K colors - Runtimes.png')
+    plt.savefig('plots/K colors - Runtimes.png')
+
+    # Print training fitness statistics
+    print '#'*10 + ' Training fitness ' + '#'*10
+    for fit, lbl in zip(fits, labels):
+        print lbl
+        print '# Runs: {}'.format(len(fit))
+        print 'Min: {}'.format(min(fit))
+        print 'Max: {}'.format(max(fit))
+        print 'Mean: {}'.format(np.mean(fit))
+        print 'Median: {}'.format(np.median(fit))
+        print ''
+
+    # Print run time statistics
+    print '#'*10 + ' Run times ' + '#'*10
+    for run, lbl in zip(runt, labels):
+        print lbl
+        print '# Runs: {}'.format(len(run))
+        print 'Min: {}'.format(min(run))
+        print 'Max: {}'.format(max(run))
+        print 'Mean: {}'.format(np.mean(run))
+        print 'Median: {}'.format(np.median(run))
+        print ''
 
 
 def analyze_neural_network():    
@@ -134,26 +201,71 @@ def analyze_neural_network():
      problem. """
     # Load performance statistics
     with open('pickles/ann.pickle') as f:
-        sols, fits, runt, labels = pickle.load(f)    
+        sols, fits, runt, labels, ann = pickle.load(f)    
 
-    # Calculate test fitness scores
+    # Calculate and plot test fitness scores
+    tfits = [map(lambda x: ann.fitf(x, train=False), sol) for sol in sols]
+    plt.figure()
+    plt.boxplot(tfits, labels=labels)
+    plt.title('Neural network - Distribution of test fitness scores by algorithm')
+    plt.ylabel('Fitness score')
+    plt.savefig('plots/Neural network - Test set fitness scores.png')
     
-    # Compare training fitness scores of different algorithms 
+    # Plot training fitness scores of different algorithms 
     plt.figure()
     plt.boxplot(fits, labels=labels)
-    plt.title('Neural network - Distribution of fitness scores by algorithm')
+    plt.title('Neural network - Distribution of training fitness scores by algorithm')
     plt.ylabel('Fitness score')
-    plt.savefig('Neural network - Fitness scores.png')
-
-    # Compare test fitness scores of different algorithms
-    plt.figure()
+    plt.savefig('plots/Neural network - Training set fitness scores.png')
 
     # Compare run times of different algorithms
     plt.figure()
     plt.boxplot(runt, labels=labels)
     plt.title('Neural network - Distribution of runtimes by algorithm')
     plt.ylabel('Runtime [secs]')
-    plt.savefig('Neural network - Runtimes.png')
+    plt.savefig('plots/Neural network - Runtimes.png')
+
+    # Test backpropagation
+    ann.network.randomize()
+    for i in range(200):
+        ann.train_network()
+        x = ann.network.params
+        print 'iter: {}'.format(i)
+        print 'backprop training fitness: {}'.format(ann.fitf(x))
+        print 'backprop test fitness: {}'.format(ann.fitf(x, train=False))
+
+    # Print test fitness statistics
+    print '#'*10 + ' Test fitness ' + '#'*10
+    for tfit, lbl in zip(tfits, labels):
+        print lbl
+        print '# Runs: {}'.format(len(tfit))
+        print 'Min: {}'.format(min(tfit))
+        print 'Max: {}'.format(max(tfit))
+        print 'Mean: {}'.format(np.mean(tfit))
+        print 'Median: {}'.format(np.median(tfit))
+        print ''
+
+    # Print training fitness statistics
+    print '#'*10 + ' Training fitness ' + '#'*10
+    for fit, lbl in zip(fits, labels):
+        print lbl
+        print '# Runs: {}'.format(len(fit))
+        print 'Min: {}'.format(min(fit))
+        print 'Max: {}'.format(max(fit))
+        print 'Mean: {}'.format(np.mean(fit))
+        print 'Median: {}'.format(np.median(fit))
+        print ''
+
+    # Print run time statistics
+    print '#'*10 + ' Run times ' + '#'*10
+    for run, lbl in zip(runt, labels):
+        print lbl
+        print '# Runs: {}'.format(len(run))
+        print 'Min: {}'.format(min(run))
+        print 'Max: {}'.format(max(run))
+        print 'Mean: {}'.format(np.mean(run))
+        print 'Median: {}'.format(np.median(run))
+        print ''
 
 
 def demo_problem(prob=None):
@@ -201,7 +313,6 @@ def demo_alg(opt_alg=None):
 
 
 def main():
-    """
     # Part 1: Get performance data for all 4 optimization algorithms on
     # all problems except ANN weight selection. Pickle results.
     algs = [hc, sa, ga, mimic]
@@ -229,11 +340,11 @@ def main():
         algorithms=algs, iterations=iter, labels=lbls)
     with open('kcolors.pickle', 'w') as f:
         pickle.dump((sols, fits, runt, labels), f)
-    """
+    
     # Part 2: Get performance data for HC, SA, and GA optimization
     # algorithms on the ANN weight selection problem. Pickle results.
     algs = [hc, sa, ga]
-    iter = [200, 200, 20]
+    iter = [200, 200, 40]
     lbls = ['Hill climbing', 'Simulated annealing', 'Genetic algorithm']
     
     ann = ANN()
@@ -241,6 +352,12 @@ def main():
         algorithms=algs, iterations=iter, labels=lbls)
     with open('ann.pickle', 'w') as f:
         pickle.dump((sols, fits, runt, labels, ann), f)
+
+    # Part 3: Plot and print results
+    analyze_four_peaks()
+    analyze_knapsack()
+    analyze_k_colors()
+    analyze_neural_network()
 
 if __name__ == '__main__':
     main()
