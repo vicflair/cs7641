@@ -1,7 +1,16 @@
-import algs
+import algs  # My algorithms
 import numpy as np
-from ann import ANN
-from datasets import Segmentation
+import matplotlib.pyplot as plt
+from ann import ANN  # ANN code
+from datasets import Segmentation  # Segmentation dataset
+from sklearn import metrics
+from sklearn.cluster import KMeans
+from sklearn.mixture import GMM
+from sklearn.decomposition import PCA, FastICA
+from sklearn.random_projection import GaussianRandomProjection
+from sklearn.lda import LDA
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
 
 def exp1():
@@ -11,32 +20,84 @@ def exp1():
     seg = Segmentation()
 
     # Find K-means cluster
-    km = algs.km(seg.train)
-    X = km.predict(seg.train.X)
+    print '-'*20 + ' K-means ' + '-'*20
+    scaler = StandardScaler(with_mean=False)
+    km = KMeans(n_clusters=7)
+    X = scaler.fit_transform(seg.train.X)
+    Y = km.fit_predict(X)
     
+    # Do the clusters line up with the labels?
+    print 'ARI: {}'.format( metrics.adjusted_rand_score(seg.train.Y, Y))
+    print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(seg.train.Y, Y))
+    
+    # How good are the clusters?
+    print 'Homogeneity: {}'.format(metrics.homogeneity_score(seg.train.Y, Y))
+    print 'Completeness: {}'.format(metrics.completeness_score(seg.train.Y, Y))
+    print 'Silhouette: {}'.format(metrics.silhouette_score(X, km.labels_))
+
     # Find EM clusters
-    em = algs.em(seg.train)
-    X = em.predict(seg.train.X)
+    print '-'*20 + ' EM ' + '-'*20
+    em = GMM(n_components=7)
+    em.fit(seg.train.X)
+    Y = em.predict(seg.train.X)
     
+    # Do the clusters line up with the labels?
+    print 'ARI: {}'.format( metrics.adjusted_rand_score(seg.train.Y, Y))
+    print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(seg.train.Y, Y))
+    
+    # How good are the clusters?
+    print 'Homogeneity: {}'.format(metrics.homogeneity_score(seg.train.Y, Y))
+    print 'Completeness: {}'.format(metrics.completeness_score(seg.train.Y, Y))
+    print 'Silhouette: {}'.format(metrics.silhouette_score(X, Y))
+
 
 def exp2():
     """Apply the dimensionality reduction algorithms to the two datasets and
     describe what you see."""
 
+    # Parameters
+    N = 5  # Number of components
+
     # Load segmentation datasets
     seg = Segmentation()
 
     # Apply PCA
-    pca = algs.pca(seg.train)
-    X = pca.transform(seg.train.X)
+    print '-'*20 + ' PCA ' + '-'*20
+    scaler = StandardScaler()
+    pca = PCA(n_components=N)
+    X = scaler.fit_transform(seg.train.X)
+    X = pca.fit_transform(X)
+    
+    # Describe PCA results
+    eigvals = np.linalg.eigvals(pca.get_covariance())
+    expl_var = sum(pca.explained_variance_ratio_) 
+    R = scaler.inverse_transform(pca.inverse_transform(X))  # Reconstruction
+    R_error = sum(map(np.linalg.norm, R-seg.train.X))
+    print 'Eigenvalues:'
+    print '{}'.format(eigvals)
+    print 'Explained variance (%): {}'.format(expl_var)
+    print 'Reconstruction error: {}'.format(R_error) 
 
     # Apply ICA
-    ica = algs.ica(seg.train)
-    X = ica.transform(seg.train.X)
+    print '-'*20 + ' ICA ' + '-'*20
+    ica = FastICA(n_components=N)
+    X = ica.fit_transform(seg.train.X)
+    
+    # Describe ICA results
+    pass
 
-    # Apply Randomized PCA
-    rca = algs.rca(seg.train)
-    X = rca.transform(seg.train.X)
+    # Apply "Randomized Components Analysis"
+    print '-'*20 + ' RCA ' + '-'*20
+    scaler = StandardScaler()
+    grp = GaussianRandomProjection(n_components=N)
+    X = scaler.fit_transform(seg.train.X)
+    X = grp.fit_transform(X)
+
+    # Describe RCA results
+    inv = np.linalg.pinv(grp.components_)
+    R = scaler.inverse_transform(np.dot(X, inv.T))  # Reconstruction
+    R_error = sum(map(np.linalg.norm, R-seg.train.X))
+    print 'Reconstruction error: {}'.format(R_error) 
 
     # Apply Linear Discriminant Analysis
     lda = algs.lda(seg.train)
