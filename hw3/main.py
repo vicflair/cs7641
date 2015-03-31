@@ -56,7 +56,7 @@ def exp2():
     describe what you see."""
 
     # Parameters
-    N = 5  # Number of components
+    N = 6  # Number of components
 
     # Load segmentation datasets
     seg = Segmentation()
@@ -107,34 +107,81 @@ def exp2():
     X = lda.fit_transform(seg.train.X, seg.train.Y)     
 
     # Describe LDA results
-    inv = np.linalg.pinv(lda.scalings_[:, 0:5])
+    inv = np.linalg.pinv(lda.scalings_[:, 0:N])
     R = np.dot(X, inv) + lda.xbar_
     R_error = sum(map(np.linalg.norm, R-seg.train.X))
     print 'Reconstruction error: {}'.format(R_error)
-    
-    return ica
+
+
+def dim_red_pipelines(N=6):
+    """Set up dimensionality reduction pipelines for convenience. 
+    Reduce to N dimensions."""
+    pipe_pca = Pipeline([('scale', StandardScaler()),
+                         ('PCA', PCA(n_components=N))])
+    pipe_ica = Pipeline([('ICA', FastICA(n_components=N, max_iter=100))])
+    pipe_rca = Pipeline([('scale', StandardScaler()),
+                         ('RCA', GaussianRandomProjection(n_components=N))])
+    pipe_lda = Pipeline([('LDA', LDA(n_components=N))])
+    return [pipe_pca, pipe_ica, pipe_rca, pipe_lda]
+
+
+def cluster_pipelines(K=7):
+    """ Set up cluster pipelines for convenience. Search for K clusters."""
+    pipe_km = Pipeline([('scale', StandardScaler(with_mean=False)),
+                        ('K-means', KMeans(n_clusters=K))])
+    pipe_em = Pipeline([('EM', GMM(n_components=K))])
+    return [pipe_km, pipe_em]
+
 
 def exp3():
     """Reproduce your clustering experiments, but on the data after you've run
     dimensionality reduction on it."""
 
-    dim_red_algs = [algs.pca, algs.ica, algs.rca, algs.lda]
-    cluster_algs = [algs.km, algs.em]
-    for dra in dim_red_algs:
-        for ca in cluster_algs:
+    # Run all pairs of reduction and clustering routines
+    dim_red = dim_red_pipelines()
+    cluster = cluster_pipelines()
+    for dr in dim_red:
+        for ca in cluster:
+            # Print name of algorithms used
+            print '\n{} & {}'.format(dr.steps[-1][0], ca.steps[-1][0])
+
             # Load segmentation data set
             seg = Segmentation()
-            seg.train.X = dra(seg.train).transform(seg.train.X)
-            C = ca(seg.train).predict(seg.train.X)
+            
+            # Reduce dimensionality
+            if dr.steps[-1][0] == "LDA":
+                X = dr.fit_transform(seg.train.X, seg.train.Y)
+            else:
+                X = dr.fit_transform(seg.train.X)
+
+            # Cluster
+            if ca.steps[-1][0] == "EM": 
+                # Because of Scikit bug, need to use GMM directly
+                ca.steps[-1][1].fit(X)
+                C = ca.steps[-1][1].predict(X)
+            else:
+                ca.fit(X)
+                C = ca.predict(X)
+
+            # Do the clusters line up with the labels?
+            print 'ARI: {}'.format( metrics.adjusted_rand_score(seg.train.Y, C))
+            print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(seg.train.Y, C))
+        
+            # How good are the clusters?
+            print 'Homogeneity: {}'.format(metrics.homogeneity_score(seg.train.Y, C))
+            print 'Completeness: {}'.format(metrics.completeness_score(seg.train.Y, C))
 
 
-def exp4():
+def exp4(max_iter=5):
     """Apply the dimensionality reduction algorithms to one of your datasets
     from assignment #1, then rerun your neural network learner on the newly
     projected data."""
-
+    
     # Load segmentaton dataset
     seg = Segmentation()
+
+    # Set up dimensionality reduction pipelines
+    dim_red = dim_red_pipelines()
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
@@ -143,21 +190,27 @@ def exp4():
     nn.make_network()
     nn.make_trainer()
 
-    # Train and run the neural network
-    for iter in range(50):
+    # Train and run the neural network as a baseline
+    print 'Baseline neural network (no dimensionality reduction)'
+    for iter in range(max_iter):
         nn.train_network()
         print 'iter: {}  train: {}  test: {}'.format(iter, nn.fitf(),
                                                      nn.fitf(train=False))
 
-    dim_red_algs = [algs.pca, algs.ica, algs.rca, algs.lda]
-    for dra in dim_red_algs:
+    # Apply dimensionality reduction and run neural network for all algorithms 
+    for dr in dim_red:
+        # Print name of algorithms used
+        print '\n{}'.format(dr.steps[-1][0])
+
         # Load a new instance of the segmentation dataset
         seg = Segmentation()
 
         # Apply dimensionality reduction algorithm to training and test sets.
-        est = dra(seg.train)
-        seg.train.X = est.transform(seg.train.X)
-        seg.test.X = est.transform(seg.test.X)
+        if dr.steps[-1][0] != 'LDA':
+            seg.train.X = dr.fit_transform(seg.train.X)
+        else:
+            seg.train.X = dr.fit_transform(seg.train.X, seg.train.Y)
+        seg.test.X = dr.transform(seg.test.X)
 
         # Build neural network
         nn = ANN()
@@ -167,12 +220,13 @@ def exp4():
         nn.make_trainer()
 
         # Run neural network
-        for iter in range(50):
+        for iter in range(max_iter):
             nn.train_network()
             print 'iter: {}  train: {}  test: {}'.format(iter, nn.fitf(),
                                                      nn.fitf(train=False))
 
-def exp5():
+
+def exp5(max_iter=5):
     """Apply the clustering algorithms to the same dataset to which you just
     applied the dimensionality reduction algorithms, treating the clusters as
     if they were new (additional) features. Rerun your neural network leaner
@@ -181,6 +235,10 @@ def exp5():
     # Load segmentaton dataset
     seg = Segmentation()
 
+    # Set up dimensionality reduction and clustering pipelines
+    dim_red = dim_red_pipelines()
+    cluster = cluster_pipelines()
+
     # Build the neural network without dimensionality reduction
     nn = ANN()
     nn.train = nn.load_data(seg.train.X, seg.train.Y)
@@ -188,32 +246,35 @@ def exp5():
     nn.make_network()
     nn.make_trainer()
 
-    # Train and run the neural network
-    for iter in range(10):
-        nn.train_network()
-        print 'iter: {}  train: {}  test: {}'.format(iter, nn.fitf(),
-                                                     nn.fitf(train=False))
+    # Apply dimensionality reduction + clustering, then run neural network
+    for dr in dim_red:
+        for ca in cluster:
+            # Print name of algorithms used
+            print '\n{} & {}'.format(dr.steps[-1][0], ca.steps[-1][0])
 
-    dim_red_algs = [algs.pca, algs.ica, algs.rca, algs.lda]
-    cluster_algs = [algs.km, algs.em]
-    for dra in dim_red_algs:
-        for ca in cluster_algs:
             # Load a new instance of the segmentation dataset
             seg = Segmentation()
 
             # Apply dimensionality reduction algorithm to training and test sets.
-            est = dra(seg.train)
-            seg.train.X = est.transform(seg.train.X)
-            seg.test.X = est.transform(seg.test.X)
+            if dr.steps[-1][0] != 'LDA':
+                seg.train.X = dr.fit_transform(seg.train.X)
+            else:
+                seg.train.X = dr.fit_transform(seg.train.X, seg.train.Y)
+            seg.test.X = dr.transform(seg.test.X)
 
             # Apply clustering to the reduced dimensionality dataset
-            est = ca(seg.train)
-            clusters = est.predict(seg.train.X)
+            if ca.steps[-1][0] == "EM":
+                ca.steps[-1][1].fit(seg.train.X)
+                C_train = ca.steps[-1][1].predict(seg.train.X)
+                C_test = ca.steps[-1][1].predict(seg.test.X)
+            else:
+                ca.fit(seg.train.X)
+                C_train = ca.predict(seg.train.X)
+                C_test = ca.predict(seg.test.X)
             seg.train.X = [np.append(x, c) for x, c 
-                           in zip(seg.train.X, clusters)]
-            clusters = est.predict(seg.test.X)
+                       in zip(seg.train.X, C_train)]
             seg.test.X = [np.append(x, c) for x, c 
-                          in zip(seg.test.X, clusters)]
+                      in zip(seg.test.X, C_test)]
 
             # Build neural network
             nn = ANN()
@@ -223,7 +284,11 @@ def exp5():
             nn.make_trainer()
 
             # Run neural network
-            for iter in range(10):
+            for iter in range(max_iter):
                 nn.train_network()
                 print 'iter: {}  train: {}  test: {}'.format(iter, nn.fitf(),
                                                          nn.fitf(train=False))
+
+
+if __name__ == "__main__":
+    print 1
