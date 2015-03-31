@@ -80,11 +80,13 @@ def exp2():
 
     # Apply ICA
     print '-'*20 + ' ICA ' + '-'*20
-    ica = FastICA(n_components=N)
+    ica = FastICA(n_components=N, max_iter=100)
     X = ica.fit_transform(seg.train.X)
     
     # Describe ICA results
-    pass
+    R = ica.inverse_transform(X)
+    R_error = sum(map(np.linalg.norm, R-seg.train.X))
+    print 'Reconstruction error: {}'.format(R_error)
 
     # Apply "Randomized Components Analysis"
     print '-'*20 + ' RCA ' + '-'*20
@@ -100,9 +102,17 @@ def exp2():
     print 'Reconstruction error: {}'.format(R_error) 
 
     # Apply Linear Discriminant Analysis
-    lda = algs.lda(seg.train)
-    X = lda.transform(seg.train.X)
+    print '-'*20 + ' LDA ' + '-'*20
+    lda = LDA(n_components=N)
+    X = lda.fit_transform(seg.train.X, seg.train.Y)     
 
+    # Describe LDA results
+    inv = np.linalg.pinv(lda.scalings_[:, 0:5])
+    R = np.dot(X, inv) + lda.xbar_
+    R_error = sum(map(np.linalg.norm, R-seg.train.X))
+    print 'Reconstruction error: {}'.format(R_error)
+    
+    return ica
 
 def exp3():
     """Reproduce your clustering experiments, but on the data after you've run
