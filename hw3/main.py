@@ -1,8 +1,7 @@
-import algs  # My algorithms
 import numpy as np
 import matplotlib.pyplot as plt
 from ann import ANN  # ANN code
-from datasets import Segmentation  # Segmentation dataset
+from datasets import Segmentation, Forest, Alertness  # Datasets
 from sklearn import metrics
 from sklearn.cluster import KMeans
 from sklearn.mixture import GMM
@@ -13,66 +12,66 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
 
-def exp1():
+def exp1(data_class):
     """Run the clustering algorithms on the datasets and describe what you see.
     """
-    # Load segmentation datasets
-    seg = Segmentation()
+    # Load data set
+    data = data_class()
 
     # Find K-means cluster
     print '-'*20 + ' K-means ' + '-'*20
     scaler = StandardScaler(with_mean=False)
     km = KMeans(n_clusters=7)
-    X = scaler.fit_transform(seg.train.X)
+    X = scaler.fit_transform(data.train.X)
     Y = km.fit_predict(X)
     
     # Do the clusters line up with the labels?
-    print 'ARI: {}'.format( metrics.adjusted_rand_score(seg.train.Y, Y))
-    print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(seg.train.Y, Y))
+    print 'ARI: {}'.format( metrics.adjusted_rand_score(data.train.Y, Y))
+    print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(data.train.Y, Y))
     
     # How good are the clusters?
-    print 'Homogeneity: {}'.format(metrics.homogeneity_score(seg.train.Y, Y))
-    print 'Completeness: {}'.format(metrics.completeness_score(seg.train.Y, Y))
+    print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, Y))
+    print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, Y))
     print 'Silhouette: {}'.format(metrics.silhouette_score(X, km.labels_))
 
     # Find EM clusters
     print '-'*20 + ' EM ' + '-'*20
     em = GMM(n_components=7)
-    em.fit(seg.train.X)
-    Y = em.predict(seg.train.X)
+    em.fit(data.train.X)
+    Y = em.predict(data.train.X)
     
     # Do the clusters line up with the labels?
-    print 'ARI: {}'.format( metrics.adjusted_rand_score(seg.train.Y, Y))
-    print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(seg.train.Y, Y))
+    print 'ARI: {}'.format( metrics.adjusted_rand_score(data.train.Y, Y))
+    print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(data.train.Y, Y))
     
     # How good are the clusters?
-    print 'Homogeneity: {}'.format(metrics.homogeneity_score(seg.train.Y, Y))
-    print 'Completeness: {}'.format(metrics.completeness_score(seg.train.Y, Y))
+    print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, Y))
+    print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, Y))
     print 'Silhouette: {}'.format(metrics.silhouette_score(X, Y))
 
 
-def exp2():
+def exp2(data_class):
     """Apply the dimensionality reduction algorithms to the two datasets and
     describe what you see."""
 
     # Parameters
     N = 6  # Number of components
 
-    # Load segmentation datasets
-    seg = Segmentation()
+    # Load datamentation datasets
+    data = data_class()
 
     # Apply PCA
     print '-'*20 + ' PCA ' + '-'*20
     scaler = StandardScaler()
     pca = PCA(n_components=N)
-    X = scaler.fit_transform(seg.train.X)
+    X = scaler.fit_transform(data.train.X)
     X = pca.fit_transform(X)
     
     # Describe PCA results
     eigvals = np.linalg.eigvals(pca.get_covariance())
     expl_var = sum(pca.explained_variance_ratio_) 
     R = scaler.inverse_transform(pca.inverse_transform(X))  # Reconstruction
-    R_error = sum(map(np.linalg.norm, R-seg.train.X))
+    R_error = sum(map(np.linalg.norm, R-data.train.X))
     print 'Eigenvalues:'
     print '{}'.format(eigvals)
     print 'Explained variance (%): {}'.format(expl_var)
@@ -81,35 +80,35 @@ def exp2():
     # Apply ICA
     print '-'*20 + ' ICA ' + '-'*20
     ica = FastICA(n_components=N, max_iter=100)
-    X = ica.fit_transform(seg.train.X)
+    X = ica.fit_transform(data.train.X)
     
     # Describe ICA results
     R = ica.inverse_transform(X)
-    R_error = sum(map(np.linalg.norm, R-seg.train.X))
+    R_error = sum(map(np.linalg.norm, R-data.train.X))
     print 'Reconstruction error: {}'.format(R_error)
 
     # Apply "Randomized Components Analysis"
     print '-'*20 + ' RCA ' + '-'*20
     scaler = StandardScaler()
     grp = GaussianRandomProjection(n_components=N)
-    X = scaler.fit_transform(seg.train.X)
+    X = scaler.fit_transform(data.train.X)
     X = grp.fit_transform(X)
 
     # Describe RCA results
     inv = np.linalg.pinv(grp.components_)
     R = scaler.inverse_transform(np.dot(X, inv.T))  # Reconstruction
-    R_error = sum(map(np.linalg.norm, R-seg.train.X))
+    R_error = sum(map(np.linalg.norm, R-data.train.X))
     print 'Reconstruction error: {}'.format(R_error) 
 
     # Apply Linear Discriminant Analysis
     print '-'*20 + ' LDA ' + '-'*20
     lda = LDA(n_components=N)
-    X = lda.fit_transform(seg.train.X, seg.train.Y)     
+    X = lda.fit_transform(data.train.X, data.train.Y)     
 
     # Describe LDA results
     inv = np.linalg.pinv(lda.scalings_[:, 0:N])
     R = np.dot(X, inv) + lda.xbar_
-    R_error = sum(map(np.linalg.norm, R-seg.train.X))
+    R_error = sum(map(np.linalg.norm, R-data.train.X))
     print 'Reconstruction error: {}'.format(R_error)
 
 
@@ -133,7 +132,7 @@ def cluster_pipelines(K=7):
     return [pipe_km, pipe_em]
 
 
-def exp3():
+def exp3(data_class):
     """Reproduce your clustering experiments, but on the data after you've run
     dimensionality reduction on it."""
 
@@ -145,14 +144,14 @@ def exp3():
             # Print name of algorithms used
             print '\n{} & {}'.format(dr.steps[-1][0], ca.steps[-1][0])
 
-            # Load segmentation data set
-            seg = Segmentation()
+            # Load datamentation data set
+            data = data_class()
             
             # Reduce dimensionality
             if dr.steps[-1][0] == "LDA":
-                X = dr.fit_transform(seg.train.X, seg.train.Y)
+                X = dr.fit_transform(data.train.X, data.train.Y)
             else:
-                X = dr.fit_transform(seg.train.X)
+                X = dr.fit_transform(data.train.X)
 
             # Cluster
             if ca.steps[-1][0] == "EM": 
@@ -164,29 +163,29 @@ def exp3():
                 C = ca.predict(X)
 
             # Do the clusters line up with the labels?
-            print 'ARI: {}'.format( metrics.adjusted_rand_score(seg.train.Y, C))
-            print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(seg.train.Y, C))
+            print 'ARI: {}'.format( metrics.adjusted_rand_score(data.train.Y, C))
+            print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(data.train.Y, C))
         
             # How good are the clusters?
-            print 'Homogeneity: {}'.format(metrics.homogeneity_score(seg.train.Y, C))
-            print 'Completeness: {}'.format(metrics.completeness_score(seg.train.Y, C))
+            print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, C))
+            print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, C))
 
 
-def exp4(max_iter=5):
+def exp4(data_class, max_iter=5):
     """Apply the dimensionality reduction algorithms to one of your datasets
     from assignment #1, then rerun your neural network learner on the newly
     projected data."""
     
-    # Load segmentaton dataset
-    seg = Segmentation()
+    # Load "clean" dataset
+    data = data_class()
 
     # Set up dimensionality reduction pipelines
     dim_red = dim_red_pipelines()
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
-    nn.train = nn.load_data(seg.train.X, seg.train.Y)
-    nn.test = nn.load_data(seg.test.X, seg.test.Y)
+    nn.train = nn.load_data(data.train.X, data.train.Y)
+    nn.test = nn.load_data(data.test.X, data.test.Y)
     nn.make_network()
     nn.make_trainer()
 
@@ -202,20 +201,17 @@ def exp4(max_iter=5):
         # Print name of algorithms used
         print '\n{}'.format(dr.steps[-1][0])
 
-        # Load a new instance of the segmentation dataset
-        seg = Segmentation()
-
         # Apply dimensionality reduction algorithm to training and test sets.
         if dr.steps[-1][0] != 'LDA':
-            seg.train.X = dr.fit_transform(seg.train.X)
+            train_X = dr.fit_transform(data.train.X)
         else:
-            seg.train.X = dr.fit_transform(seg.train.X, seg.train.Y)
-        seg.test.X = dr.transform(seg.test.X)
+            train_X = dr.fit_transform(data.train.X, data.train.Y)
+        test_X = dr.transform(data.test.X)
 
         # Build neural network
         nn = ANN()
-        nn.train = nn.load_data(seg.train.X, seg.train.Y)
-        nn.test = nn.load_data(seg.test.X, seg.test.Y)
+        nn.train = nn.load_data(train_X, data.train.Y)
+        nn.test = nn.load_data(test_X, data.test.Y)
         nn.make_network()
         nn.make_trainer()
 
@@ -226,14 +222,14 @@ def exp4(max_iter=5):
                                                      nn.fitf(train=False))
 
 
-def exp5(max_iter=5):
+def exp5(data_class, max_iter=5):
     """Apply the clustering algorithms to the same dataset to which you just
     applied the dimensionality reduction algorithms, treating the clusters as
     if they were new (additional) features. Rerun your neural network leaner
     on the newly projected data."""
 
-    # Load segmentaton dataset
-    seg = Segmentation()
+    # Load dataset
+    data = data_class()
 
     # Set up dimensionality reduction and clustering pipelines
     dim_red = dim_red_pipelines()
@@ -241,8 +237,8 @@ def exp5(max_iter=5):
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
-    nn.train = nn.load_data(seg.train.X, seg.train.Y)
-    nn.test = nn.load_data(seg.test.X, seg.test.Y)
+    nn.train = nn.load_data(data.train.X, data.train.Y)
+    nn.test = nn.load_data(data.test.X, data.test.Y)
     nn.make_network()
     nn.make_trainer()
 
@@ -252,34 +248,33 @@ def exp5(max_iter=5):
             # Print name of algorithms used
             print '\n{} & {}'.format(dr.steps[-1][0], ca.steps[-1][0])
 
-            # Load a new instance of the segmentation dataset
-            seg = Segmentation()
-
             # Apply dimensionality reduction algorithm to training and test sets.
             if dr.steps[-1][0] != 'LDA':
-                seg.train.X = dr.fit_transform(seg.train.X)
+                train_X = dr.fit_transform(data.train.X)
             else:
-                seg.train.X = dr.fit_transform(seg.train.X, seg.train.Y)
-            seg.test.X = dr.transform(seg.test.X)
+                train_X = dr.fit_transform(data.train.X, data.train.Y)
+            test_X = dr.transform(data.test.X)
 
             # Apply clustering to the reduced dimensionality dataset
             if ca.steps[-1][0] == "EM":
-                ca.steps[-1][1].fit(seg.train.X)
-                C_train = ca.steps[-1][1].predict(seg.train.X)
-                C_test = ca.steps[-1][1].predict(seg.test.X)
+                ca.steps[-1][1].fit(train_X)
+                C_train = ca.steps[-1][1].predict(train_X)
+                C_test = ca.steps[-1][1].predict(test_X)
             else:
-                ca.fit(seg.train.X)
-                C_train = ca.predict(seg.train.X)
-                C_test = ca.predict(seg.test.X)
-            seg.train.X = [np.append(x, c) for x, c 
-                       in zip(seg.train.X, C_train)]
-            seg.test.X = [np.append(x, c) for x, c 
-                      in zip(seg.test.X, C_test)]
+                ca.fit(train_X)
+                C_train = ca.predict(train_X)
+                C_test = ca.predict(test_X)
+
+            # Add cluster assignment as a feature
+            train_X = [np.append(x, c) for x, c 
+                       in zip(train_X, C_train)]
+            test_X = [np.append(x, c) for x, c 
+                      in zip(test_X, C_test)]
 
             # Build neural network
             nn = ANN()
-            nn.train = nn.load_data(seg.train.X, seg.train.Y)
-            nn.test = nn.load_data(seg.test.X, seg.test.Y)
+            nn.train = nn.load_data(train_X, data.train.Y)
+            nn.test = nn.load_data(test_X, data.test.Y)
             nn.make_network()
             nn.make_trainer()
 
