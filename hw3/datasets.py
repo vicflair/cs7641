@@ -48,6 +48,33 @@ class Segmentation():
         return txy
 
 
+class Insurance():
+    def __init__(self):
+        self.n_class = 2
+        self.train = self.load_train()
+        self.test = self.load_test()
+
+    def load_train(self):
+        with open('data/train.txt') as f:
+            data = csv.reader(f, delimiter='\t')
+            data = [row for row in data]
+        train_x = [map(int, x[0:len(x)-1]) for x in data]
+        train_y = [int(x[-1]) for x in data]
+        return Dataset(train_x, train_y)
+
+    def load_test(self):
+        with open('data/testx.txt') as f:
+            data = csv.reader(f, delimiter='\t')
+            data = [row for row in data]
+        test_x = [map(int, x) for x in data]
+
+        with open('data/testy.txt') as f:
+            data = csv.reader(f, delimiter='\t')
+            data = [row for row in data]
+        test_y = [int(x[0]) for x in data]
+        return Dataset(test_x, test_y)
+
+
 class Forest():
     """ Load Forest Cover type data set. 
     """
