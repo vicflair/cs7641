@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
 
-def exp1(data_class):
+def exp1(data_class, K=7):
     """Run the clustering algorithms on the datasets and describe what you see.
     """
     # Load data set
@@ -21,7 +21,7 @@ def exp1(data_class):
     # Find K-means cluster
     print '-'*20 + ' K-means ' + '-'*20
     scaler = StandardScaler(with_mean=False)
-    km = KMeans(n_clusters=7)
+    km = KMeans(n_clusters=K)
     X = scaler.fit_transform(data.train.X)
     Y = km.fit_predict(X)
     
@@ -36,7 +36,7 @@ def exp1(data_class):
 
     # Find EM clusters
     print '-'*20 + ' EM ' + '-'*20
-    em = GMM(n_components=7)
+    em = GMM(n_components=K)
     em.fit(data.train.X)
     Y = em.predict(data.train.X)
     
@@ -50,13 +50,9 @@ def exp1(data_class):
     print 'Silhouette: {}'.format(metrics.silhouette_score(X, Y))
 
 
-def exp2(data_class):
+def exp2(data_class, N=6):
     """Apply the dimensionality reduction algorithms to the two datasets and
     describe what you see."""
-
-    # Parameters
-    N = 6  # Number of components
-
     # Load datamentation datasets
     data = data_class()
 
@@ -79,7 +75,7 @@ def exp2(data_class):
 
     # Apply ICA
     print '-'*20 + ' ICA ' + '-'*20
-    ica = FastICA(n_components=N, max_iter=100)
+    ica = FastICA(n_components=N, max_iter=200)
     X = ica.fit_transform(data.train.X)
     
     # Describe ICA results
@@ -132,13 +128,13 @@ def cluster_pipelines(K=7):
     return [pipe_km, pipe_em]
 
 
-def exp3(data_class):
+def exp3(data_class, N=6, K=7):
     """Reproduce your clustering experiments, but on the data after you've run
     dimensionality reduction on it."""
 
     # Run all pairs of reduction and clustering routines
-    dim_red = dim_red_pipelines()
-    cluster = cluster_pipelines()
+    dim_red = dim_red_pipelines(N)
+    cluster = cluster_pipelines(K)
     for dr in dim_red:
         for ca in cluster:
             # Print name of algorithms used
@@ -171,7 +167,7 @@ def exp3(data_class):
             print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, C))
 
 
-def exp4(data_class, max_iter=5):
+def exp4(data_class, N=6, max_iter=5):
     """Apply the dimensionality reduction algorithms to one of your datasets
     from assignment #1, then rerun your neural network learner on the newly
     projected data."""
@@ -180,7 +176,7 @@ def exp4(data_class, max_iter=5):
     data = data_class()
 
     # Set up dimensionality reduction pipelines
-    dim_red = dim_red_pipelines()
+    dim_red = dim_red_pipelines(N)
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
@@ -222,7 +218,7 @@ def exp4(data_class, max_iter=5):
                                                      nn.fitf(train=False))
 
 
-def exp5(data_class, max_iter=5):
+def exp5(data_class, N=6, K=7, max_iter=5):
     """Apply the clustering algorithms to the same dataset to which you just
     applied the dimensionality reduction algorithms, treating the clusters as
     if they were new (additional) features. Rerun your neural network leaner
@@ -232,8 +228,8 @@ def exp5(data_class, max_iter=5):
     data = data_class()
 
     # Set up dimensionality reduction and clustering pipelines
-    dim_red = dim_red_pipelines()
-    cluster = cluster_pipelines()
+    dim_red = dim_red_pipelines(N)
+    cluster = cluster_pipelines(K)
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
