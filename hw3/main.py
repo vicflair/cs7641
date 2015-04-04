@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 from ann import ANN  # ANN code
 from datasets import Segmentation, Forest, Alertness  # Datasets
 from sklearn import metrics
@@ -25,6 +26,11 @@ def exp1(data_class, K=7):
     X = scaler.fit_transform(data.train.X)
     Y = km.fit_predict(X)
     
+    # Save K-means results
+    fname = 'data/exp1_km.pickle'
+    with open(fname, 'w') as f:
+        pickle.dump([km, data, X, Y], f)
+
     # Do the clusters line up with the labels?
     print 'ARI: {}'.format( metrics.adjusted_rand_score(data.train.Y, Y))
     print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(data.train.Y, Y))
@@ -41,15 +47,9 @@ def exp1(data_class, K=7):
     Y = em.predict(data.train.X)
 
     # Save EM results
-    
-    # Plot EM clusters
-    colors = iter(plt.cm.rainbow(np.linspace(0, 1, data.train.N)))
-    f1 = 9
-    f2 = 10
-    for i in range(data.train.N):
-        msk = Y == i
-        plt.scatter(data.train.X[msk, f1], data.train.X[msk, f2], color=next(colors))
-    plt.show()
+    fname = 'data/exp1_em.pickle'
+    with open(fname, 'w') as f:
+        pickle.dump([em, data, Y], f)
 
     # Do the clusters line up with the labels?
     print 'ARI: {}'.format( metrics.adjusted_rand_score(data.train.Y, Y))
@@ -59,6 +59,40 @@ def exp1(data_class, K=7):
     print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, Y))
     print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, Y))
     #print 'Silhouette: {}'.format(metrics.silhouette_score(X, Y))
+
+
+def plot1(f1=13, f2=15):
+    """Plot results from experiment 1."""
+    # Load K-means data for experiment 1
+    fname = 'data/exp1_km.pickle'
+    with open(fname) as f:
+        km, data, X, Y = pickle.load(f)
+
+    # Plot K-means clusters
+    colors = plt.cm.rainbow(np.linspace(0, 1, len(km.cluster_centers_)))
+    shapes = ["o", "v", "s", "p", "*", "x", "+"]
+    shapes = ["o"]*7
+    for i in range(data.n_class):
+        for j in range(len(km.cluster_centers_)):
+            msk = (data.train.Y == i) & (Y == j)
+            plt.scatter(data.train.X[msk, f1], data.train.X[msk, f2], 
+                        color=colors[i], marker=shapes[j])
+    plt.title("K-means")
+    plt.show()
+        
+    # Load EM data for experiment 1
+    fname = 'data/exp1_em.pickle'
+    with open(fname) as f:
+        em, data, Y = pickle.load(f) 
+
+    # Plot EM clusters
+    for i in range(data.n_class):
+        msk = Y == i
+        plt.scatter(data.train.X[msk, f1], data.train.X[msk, f2], color=colors[i])
+        #plt.scatter(em.means_[i, f1], em.means_[i, f2],
+        #            color=colors[i], marker="s", edgecolor="black", s=128) 
+    plt.title("EM")
+    plt.show()
 
 
 def exp2(data_class, N=6):
@@ -74,6 +108,11 @@ def exp2(data_class, N=6):
     X = scaler.fit_transform(data.train.X)
     X = pca.fit_transform(X)
     
+    # Save PCA results
+    fname = 'data/exp2_pca.pickle'
+    with open(fname, 'w') as f:
+        pickle.dump([pca, data, X], f)
+
     # Describe PCA results
     eigvals = np.linalg.eigvals(pca.get_covariance())
     expl_var = sum(pca.explained_variance_ratio_) 
@@ -89,6 +128,11 @@ def exp2(data_class, N=6):
     ica = FastICA(n_components=N, max_iter=200)
     X = ica.fit_transform(data.train.X)
     
+    # Save ICA results
+    fname = 'data/exp2_ica.pickle'
+    with open(fname, 'w') as f:
+        pickle.dump([ica, data, X], f)
+
     # Describe ICA results
     R = ica.inverse_transform(X)
     R_error = sum(map(np.linalg.norm, R-data.train.X))
@@ -97,12 +141,17 @@ def exp2(data_class, N=6):
     # Apply "Randomized Components Analysis"
     print '-'*20 + ' RCA ' + '-'*20
     scaler = StandardScaler()
-    grp = GaussianRandomProjection(n_components=N)
+    rca = GaussianRandomProjection(n_components=N)
     X = scaler.fit_transform(data.train.X)
-    X = grp.fit_transform(X)
+    X = rca.fit_transform(X)
+
+    # Save RCA results
+    fname = 'data/exp2_rca.pickle'
+    with open(fname, 'w') as f:
+        pickle.dump([rca, data, X], f)
 
     # Describe RCA results
-    inv = np.linalg.pinv(grp.components_)
+    inv = np.linalg.pinv(rca.components_)
     R = scaler.inverse_transform(np.dot(X, inv.T))  # Reconstruction
     R_error = sum(map(np.linalg.norm, R-data.train.X))
     print 'Reconstruction error: {}'.format(R_error) 
@@ -112,11 +161,62 @@ def exp2(data_class, N=6):
     lda = LDA(n_components=N)
     X = lda.fit_transform(data.train.X, data.train.Y)     
 
+    # Save LDA results
+    fname = 'data/exp2_lda.pickle'
+    with open(fname, 'w') as f:
+        pickle.dump([lda, data, X], f)
+
     # Describe LDA results
     inv = np.linalg.pinv(lda.scalings_[:, 0:N])
     R = np.dot(X, inv) + lda.xbar_
     R_error = sum(map(np.linalg.norm, R-data.train.X))
     print 'Reconstruction error: {}'.format(R_error)
+
+
+def plot2(f1=0, f2=1):
+    """Plot experiment 2 results."""
+    # Load PCA results
+    fname = 'data/exp2_pca.pickle'
+    with open(fname) as f:
+        pca, data, X = pickle.load(f)
+
+    # Plot PCA
+    plt.scatter(X[:, f1], X[:, f2], color="green")
+    plt.title("PCA")
+    plt.show()
+
+    # Load ICA results
+    fname = 'data/exp2_ica.pickle'
+    with open(fname) as f:
+        ica, data, X = pickle.load(f)
+
+    # Plot ICA
+    plt.scatter(X[:, f1], X[:, f2], color="green")
+    plt.title("ICA")
+    plt.show()
+
+    # Load RCA results
+    fname = 'data/exp2_rca.pickle'
+    with open(fname) as f:
+        rca, data, X = pickle.load(f)
+
+    # Plot RCA
+    plt.scatter(X[:, f1], X[:, f2], color="green")
+    plot.title("RCA")
+    plt.show()
+
+    # Load LDA results
+    fname = 'data/exp2_lda.pickle'
+    with open(fname) as f:
+        lda, data, X = pickle.load(f)
+
+    # Plot LDA
+    colors = plt.cm.rainbow(np.linspace(0, 1, data.n_class))
+    for i in range(data.n_class):
+        msk = data.train.Y == i
+        plt.scatter(X[msk, f1], X[msk, f2], color=colors[i])
+    plot.title("LDA")
+    plt.show()
 
 
 def dim_red_pipelines(N=6):
@@ -169,6 +269,13 @@ def exp3(data_class, N=6, K=7):
                 ca.fit(X)
                 C = ca.predict(X)
 
+            # Save results
+            alg1 = dr.steps[-1][0]
+            alg2 = ca.steps[-1][0]
+            fname = "data/exp3_" + alg1 + '_' + alg2 + ".pickle"
+            with open(fname, 'w') as f:
+                pickle.dump([data, X, C], f)
+
             # Do the clusters line up with the labels?
             print 'ARI: {}'.format( metrics.adjusted_rand_score(data.train.Y, C))
             print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(data.train.Y, C))
@@ -176,6 +283,26 @@ def exp3(data_class, N=6, K=7):
             # How good are the clusters?
             print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, C))
             print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, C))
+
+
+def plot3(f1=0, f2=1):
+    """Plot results for experiment 3."""
+    # Plot clusters in the reduced dimensional spaced for all combinations of 
+    # dimensionality reduction and clustering algorithms
+    for dr in ["PCA", "ICA", "RCA", "LDA"]:
+        for ca in ["K-means", "EM"]:
+            # Load data
+            fname = "data/exp3_" + dr + '_' + ca + '.pickle'    
+            with open(fname) as f:
+                data, X, C = pickle.load(f)
+        
+            # Plot results
+            colors = plt.cm.rainbow(np.linspace(0, 1, data.n_class))
+            for i in range(data.n_class):
+                msk = C == i
+                plt.scatter(X[msk, f1], X[msk, f2], color=colors[i])
+            plt.title(dr + ' & ' + ca)
+            plt.show()
 
 
 def exp4(data_class, N=6, max_iter=50):
@@ -191,8 +318,8 @@ def exp4(data_class, N=6, max_iter=50):
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
-    nn.train = nn.load_data(data.train.X, data.train.Y, data.train.N)
-    nn.test = nn.load_data(data.test.X, data.test.Y, data.test.N)
+    nn.train = nn.load_data(data.train.X, data.train.Y, data.n_class)
+    nn.test = nn.load_data(data.test.X, data.test.Y, data.n_class)
     nn.make_network()
     nn.make_trainer()
 
@@ -217,8 +344,8 @@ def exp4(data_class, N=6, max_iter=50):
 
         # Build neural network
         nn = ANN()
-        nn.train = nn.load_data(train_X, data.train.Y, data.train.N)
-        nn.test = nn.load_data(test_X, data.test.Y, data.test.N)
+        nn.train = nn.load_data(train_X, data.train.Y, data.n_class)
+        nn.test = nn.load_data(test_X, data.test.Y, data.n_class)
         nn.make_network()
         nn.make_trainer()
 
@@ -244,8 +371,8 @@ def exp5(data_class, N=6, K=7, max_iter=50):
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
-    nn.train = nn.load_data(data.train.X, data.train.Y, data.train.N)
-    nn.test = nn.load_data(data.test.X, data.test.Y, data.test.N)
+    nn.train = nn.load_data(data.train.X, data.train.Y, data.n_class)
+    nn.test = nn.load_data(data.test.X, data.test.Y, data.n_class)
     nn.make_network()
     nn.make_trainer()
 
@@ -280,8 +407,8 @@ def exp5(data_class, N=6, K=7, max_iter=50):
 
             # Build neural network
             nn = ANN()
-            nn.train = nn.load_data(train_X, data.train.Y, data.train.N)
-            nn.test = nn.load_data(test_X, data.test.Y, data.test.N)
+            nn.train = nn.load_data(train_X, data.train.Y, data.n_class)
+            nn.test = nn.load_data(test_X, data.test.Y, data.n_class)
             nn.make_network()
             nn.make_trainer()
 
@@ -338,7 +465,7 @@ def main():
     print '#'*20
 
     print '### Alertness dataset ###'
-    exp4(Alertness)
+    exp4(Segmentation)
     print '\n'*2
 
     # Run experiment 5 on one dataset from HW#1
@@ -347,7 +474,7 @@ def main():
     print '#'*20
 
     print '### Alertness dataset ###' 
-    exp5(Alertness)
+    exp5(Segmentation)
 
 
 if __name__ == "__main__":

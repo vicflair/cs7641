@@ -15,6 +15,7 @@ class Dataset():
 
 class Segmentation():
     def __init__(self):
+        self.name = "Segmentation"
         self.n_class = 7
         self.train_file = 'data/segmentation.train'
         self.test_file = 'data/segmentation.test'
@@ -52,6 +53,7 @@ class Segmentation():
 
 class Insurance():
     def __init__(self):
+        self.name = "Insurance"
         self.n_class = 2
         self.train = self.load_train()
         self.test = self.load_test()
@@ -81,6 +83,7 @@ class Forest():
     """ Load Forest Cover type data set. 
     """
     def __init__(self):
+        self.name = "Forest"
         self.n_class = 7
         self.train, self.test = self.load_data()
 
@@ -106,6 +109,7 @@ class Forest():
 
 class Alertness():
     def __init__(self):
+        self.name = "Alertness"
         self.n_class = 2
         self.train, self.test = self.load_data()
 
