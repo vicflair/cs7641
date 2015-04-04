@@ -32,7 +32,7 @@ def exp1(data_class, K=7):
     # How good are the clusters?
     print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, Y))
     print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, Y))
-    print 'Silhouette: {}'.format(metrics.silhouette_score(X, km.labels_))
+    #print 'Silhouette: {}'.format(metrics.silhouette_score(X, km.labels_))
 
     # Find EM clusters
     print '-'*20 + ' EM ' + '-'*20
@@ -47,7 +47,7 @@ def exp1(data_class, K=7):
     # How good are the clusters?
     print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, Y))
     print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, Y))
-    print 'Silhouette: {}'.format(metrics.silhouette_score(X, Y))
+    #print 'Silhouette: {}'.format(metrics.silhouette_score(X, Y))
 
 
 def exp2(data_class, N=6):
@@ -167,7 +167,7 @@ def exp3(data_class, N=6, K=7):
             print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, C))
 
 
-def exp4(data_class, N=6, max_iter=5):
+def exp4(data_class, N=6, max_iter=50):
     """Apply the dimensionality reduction algorithms to one of your datasets
     from assignment #1, then rerun your neural network learner on the newly
     projected data."""
@@ -180,8 +180,8 @@ def exp4(data_class, N=6, max_iter=5):
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
-    nn.train = nn.load_data(data.train.X, data.train.Y)
-    nn.test = nn.load_data(data.test.X, data.test.Y)
+    nn.train = nn.load_data(data.train.X, data.train.Y, data.train.N)
+    nn.test = nn.load_data(data.test.X, data.test.Y, data.test.N)
     nn.make_network()
     nn.make_trainer()
 
@@ -206,8 +206,8 @@ def exp4(data_class, N=6, max_iter=5):
 
         # Build neural network
         nn = ANN()
-        nn.train = nn.load_data(train_X, data.train.Y)
-        nn.test = nn.load_data(test_X, data.test.Y)
+        nn.train = nn.load_data(train_X, data.train.Y, data.train.N)
+        nn.test = nn.load_data(test_X, data.test.Y, data.test.N)
         nn.make_network()
         nn.make_trainer()
 
@@ -218,7 +218,7 @@ def exp4(data_class, N=6, max_iter=5):
                                                      nn.fitf(train=False))
 
 
-def exp5(data_class, N=6, K=7, max_iter=5):
+def exp5(data_class, N=6, K=7, max_iter=50):
     """Apply the clustering algorithms to the same dataset to which you just
     applied the dimensionality reduction algorithms, treating the clusters as
     if they were new (additional) features. Rerun your neural network leaner
@@ -233,8 +233,8 @@ def exp5(data_class, N=6, K=7, max_iter=5):
 
     # Build the neural network without dimensionality reduction
     nn = ANN()
-    nn.train = nn.load_data(data.train.X, data.train.Y)
-    nn.test = nn.load_data(data.test.X, data.test.Y)
+    nn.train = nn.load_data(data.train.X, data.train.Y, data.train.N)
+    nn.test = nn.load_data(data.test.X, data.test.Y, data.test.N)
     nn.make_network()
     nn.make_trainer()
 
@@ -269,8 +269,8 @@ def exp5(data_class, N=6, K=7, max_iter=5):
 
             # Build neural network
             nn = ANN()
-            nn.train = nn.load_data(train_X, data.train.Y)
-            nn.test = nn.load_data(test_X, data.test.Y)
+            nn.train = nn.load_data(train_X, data.train.Y, data.train.N)
+            nn.test = nn.load_data(test_X, data.test.Y, data.test.N)
             nn.make_network()
             nn.make_trainer()
 
@@ -281,5 +281,41 @@ def exp5(data_class, N=6, K=7, max_iter=5):
                                                          nn.fitf(train=False))
 
 
+def main():
+    # Run experiment 1 on two datasets
+    print '#'*20
+    print exp1.__doc__
+    print '#'*20
+    exp1(Segmentation)
+    print '\n'*2
+    
+    # Run experiment 2 on two datasets
+    print '#'*20
+    print exp2.__doc__
+    print '#'*20
+    exp2(Segmentation)
+    print '\n'*2
+
+    # Run experiment 3 on two datasets
+    print '#'*20
+    print exp3.__doc__
+    print '#'*20
+    exp3(Segmentation)
+    print '\n'*2
+
+    # Run experiment 4 on two datasets
+    print '#'*20
+    print exp4.__doc__
+    print '#'*20
+    exp4(Segmentation)
+    print '\n'*2
+
+    # Run experiment 5 on two datasets
+    print '#'*20
+    print exp5.__doc__
+    print '#'*20
+    exp5(Segmentation)
+
+
 if __name__ == "__main__":
-    print 1
+    main()

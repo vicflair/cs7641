@@ -16,9 +16,9 @@ class ANN():
         self.network = None
         self.trainer = None 
 
-    def load_data(self, X, Y):
+    def load_data(self, X, Y, N):
         input_size = len(X[0])
-        ds = ClassificationDataSet(input_size, 1, nb_classes=X.N)
+        ds = ClassificationDataSet(input_size, 1, nb_classes=N)
         for x, y in zip(X, Y):
             ds.addSample(x, y)
         ds._convertToOneOfMany()
