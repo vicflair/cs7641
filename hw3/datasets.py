@@ -18,8 +18,8 @@ class Segmentation():
         self.n_class = 7
         self.train_file = 'data/segmentation.train'
         self.test_file = 'data/segmentation.test'
-        self.train = self.load_data(self.train_file)
-        self.test = self.load_data(self.test_file)
+        self.train = self.load_data(self.test_file)
+        self.test = self.load_data(self.train_file)
 
     def load_data(self, fname):
         with open(fname) as f:
@@ -44,6 +44,8 @@ class Segmentation():
                 ty[i] = 6
             else:
                 print 'error'
+        tx = np.asarray(tx)
+        ty = np.asarray(ty)
         txy = Dataset(tx, ty)
         return txy
 

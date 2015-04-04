@@ -39,7 +39,18 @@ def exp1(data_class, K=7):
     em = GMM(n_components=K)
     em.fit(data.train.X)
     Y = em.predict(data.train.X)
+
+    # Save EM results
     
+    # Plot EM clusters
+    colors = iter(plt.cm.rainbow(np.linspace(0, 1, data.train.N)))
+    f1 = 9
+    f2 = 10
+    for i in range(data.train.N):
+        msk = Y == i
+        plt.scatter(data.train.X[msk, f1], data.train.X[msk, f2], color=next(colors))
+    plt.show()
+
     # Do the clusters line up with the labels?
     print 'ARI: {}'.format( metrics.adjusted_rand_score(data.train.Y, Y))
     print 'AMI: {}'.format(metrics.adjusted_mutual_info_score(data.train.Y, Y))
