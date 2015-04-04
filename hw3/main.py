@@ -286,35 +286,57 @@ def main():
     print '#'*20
     print exp1.__doc__
     print '#'*20
+
+    print '### Segmentation dataset ###' 
     exp1(Segmentation)
+    print '\n'
+
+    print '### Alertness dataset ###'
+    exp1(Alertness)
     print '\n'*2
     
     # Run experiment 2 on two datasets
     print '#'*20
     print exp2.__doc__
     print '#'*20
+
+    print '### Segmentation dataset ###' 
     exp2(Segmentation)
+    print '\n'
+
+    print '### Alertness dataset ###'
+    exp2(Alertness)
     print '\n'*2
 
     # Run experiment 3 on two datasets
     print '#'*20
     print exp3.__doc__
     print '#'*20
+
+    print '### Segmentation dataset ###' 
     exp3(Segmentation)
+    print '\n'
+
+    print '### Alertness dataset ###'
+    exp3(Alertness)
     print '\n'*2
 
-    # Run experiment 4 on two datasets
+    # Run experiment 4 on one dataset from HW#1
     print '#'*20
     print exp4.__doc__
     print '#'*20
-    exp4(Segmentation)
+
+    print '### Alertness dataset ###'
+    exp4(Alertness)
     print '\n'*2
 
-    # Run experiment 5 on two datasets
+    # Run experiment 5 on one dataset from HW#1
     print '#'*20
     print exp5.__doc__
     print '#'*20
-    exp5(Segmentation)
+
+    print '### Alertness dataset ###' 
+    exp5(Alertness)
 
 
 if __name__ == "__main__":
