@@ -18,7 +18,7 @@ class ANN():
 
     def load_data(self, X, Y):
         input_size = len(X[0])
-        ds = ClassificationDataSet(input_size, 1, nb_classes=7)
+        ds = ClassificationDataSet(input_size, 1, nb_classes=X.N)
         for x, y in zip(X, Y):
             ds.addSample(x, y)
         ds._convertToOneOfMany()

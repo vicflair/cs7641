@@ -79,22 +79,22 @@ class Forest():
     """ Load Forest Cover type data set. 
     """
     def __init__(self):
-        self.n_class = 2
+        self.n_class = 7
         self.train, self.test = self.load_data()
 
     def load_data(self):
         with open('data/forest_data_clean.csv') as f:
-            data = pandas.read_csv(f, delimiter=',')
-
-        # A little bit of munging: drop Id column and change int to float
-        data = data.iloc[:, 1:-1].astype(np.float)
+            data = csv.reader(f, delimiter=',')
+            # A little bit of munging: drop Id column and change int16 
+            data = np.asarray([x[1:] for i, x in enumerate(data) if i > 0], 
+                              dtype=np.int16)
 
         # Perform a 4:1 split for training and test data
         msk = np.random.rand(len(data)) < 0.8
-        trainx = data.iloc[msk, :-1].as_matrix()
-        trainy = data.iloc[msk, -1].as_matrix()
-        testx = data.iloc[~msk, :-1].as_matrix()
-        testy = data.iloc[~msk, -1].as_matrix()
+        trainx = data[msk, :-1]
+        trainy = data[msk, -1]
+        testx = data[~msk, :-1]
+        testy = data[~msk, -1]
 
         # Return training and test sets
         trainSet = Dataset(trainx, trainy)
@@ -111,23 +111,27 @@ class Alertness():
         """ Load Ford alertness data set. 
         """
         with open('data/fordTrain.csv') as f:
-            data = pandas.read_csv(f, sep=',')
+            data = csv.reader(f, delimiter=',')
+            train = [x for i, x in enumerate(data) if i > 0] 
+            # Extract features and target variable separately
+            trainx = [x[3:] for x in train]
+            trainy = [x[2] for x in train]
 
         with open('data/fordTest.csv') as f:
-            test = pandas.read_csv(f, sep=',')
+            data = csv.reader(f, delimiter=',')
+            testx = [x[3:] for i, x in enumerate(data) if i > 0] 
 
         with open('data/Solution.csv') as f:
-            soln = pandas.read_csv(f, sep=',')
+            data = csv.reader(f, delimiter=',')
+            testy = [x[2] for i, x in enumerate(data) if i > 0] 
 
-        trainx = data.loc[:, [col for col in data.columns if col != 'IsAlert']]
-        trainy = data.loc[:, 'IsAlert']
-        testx = test.loc[:, [col for col in test.columns if col != 'IsAlert']]
-        testy = soln.Prediction
-
-        # Pre-process data.
-        pass
+        # Extract features and target variable, convert to numpy array
+        trainx = np.asarray(trainx, dtype=np.float32)
+        trainy = np.asarray(trainy, dtype=np.int8)
+        testx = np.asarray(testx, dtype=np.float32)
+        testy = np.asarray(testy, dtype=np.int8)
 
         # Return training and test sets
-        trainSet = Dataset(trainx.as_matrix(), trainy.as_matrix())
-        testSet = Dataset(testx.as_matrix(), testy.as_matrix())
+        trainSet = Dataset(trainx, trainy)
+        testSet = Dataset(testx, testy)
         return trainSet, testSet
