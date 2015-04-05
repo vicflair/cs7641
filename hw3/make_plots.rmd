@@ -1,0 +1,97 @@
+---
+title: "Make plots for analysis report"
+output: html_document
+---
+
+Load resources
+```{r}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+```
+
+Load data
+```{r}
+exp1b <- read.csv("results/exp1b.csv")
+#exp1.km <- read.csv("results/exp1_km.csv")
+#exp1.em <- read.csv("results/exp1_em.csv")
+#exp2.pca <- read.csv("results/exp2_pca.csv")
+exp2b <- read.csv("results/exp2b.csv")
+exp2c <- read.csv("results/exp2c.csv")
+exp4 <- read.csv("results/exp4.csv")
+exp5 <- read.csv("results/exp5.csv")
+
+```
+
+Plot cluster performance in experiment 1
+```{r}
+exp1b.tidy <- 
+  exp1b %>%
+  gather(Metric, Score, ARI:Silhouette)
+
+ggplot(exp1b.tidy, aes(x=N_clusters, y=Score, color=Metric)) + geom_smooth(se=F) + facet_grid(. ~ Algorithm) + ggtitle("Five cluster metrics for two clustering algorithms") + scale_x_continuous(breaks=seq(2,13,1)) + xlab("# of clusters")
+```
+
+Plot dimensionality reduction performance in experiment 2
+```{r}
+exp2b.tidy <-
+  exp2b %>%
+  gather(Algorithm, ReconstructionError, PCA:LDA) %>%
+  rename(Components=n_components, ExplainedVariance=explained_variance)
+
+ggplot(exp2b.tidy, aes(x=Components, y=ReconstructionError, color=Algorithm)) + geom_line() + scale_x_continuous(breaks=seq(1,14,1)) + ggtitle("Reconstruction error using four dimensionality reduction algorithms") + scale_y_continuous(breaks=seq(0,250000,50000)) #+ scale_y_log10() + 
+
+#ggplot(exp2b.tidy, aes(x=Components, y=ExplainedVariance)) + geom_line() + scale_x_continuous(breaks=seq(1,14,1)) + #ggtitle("Total variance explained by N components") + scale_y_continuous(breaks=seq(0.4, 1.0, .1))
+```
+
+Plot eigenvalues and explained variance in experiment 2
+```{r}
+ggplot(exp2c, aes(x=Component, y=Eigenvalues, fill=Dataset)) + geom_bar(stat="identity") + facet_grid(Dataset ~ .)
+
+ggplot(exp2c, aes(x=Component, y=Variance, fill=Dataset)) + geom_bar(stat="identity") + facet_grid(Dataset ~ .)
+```
+
+Plot neural network performance in experiment 4
+```{r}
+exp4.tidy <-
+  exp4 %>%
+  rename(
+    Routine=routine,
+    Iteration=iteration
+    ) %>%
+  gather(Measure, Accuracy, training_accuracy:test_accuracy)
+
+ggplot(exp4.tidy, aes(x=Iteration, y=Accuracy, color=Measure)) + geom_smooth(se=F) + facet_grid(Routine ~ ., scales="free_y")
+
+ggplot(exp4.tidy, aes(x=Iteration, y=Accuracy, color=Routine)) + geom_smooth(se=F) + ggtitle("Neural network test accuracy on dimensionality reduced dataset")
+```
+
+Plot neural network performance in experiment 5
+```{r}
+exp5.tidy <-
+  exp5 %>%
+  rename(
+    Routine=routine,
+    Iteration=iteration,
+    Accuracy=test_accuracy
+    ) %>%
+  separate(Routine, 
+           into=c("D_Reduction", "Clustering"), 
+           sep=" & ")
+
+exp5.alg <- 
+  exp5.tidy %>%
+  filter(Clustering != "Baseline")
+
+exp5.base <-
+  exp5.tidy %>%
+  filter(Clustering == "Baseline") %>%
+  transmute(
+    Iteration,
+    val=Accuracy
+    )
+
+p <- ggplot(data=exp5.alg, aes(x=Iteration, y=Accuracy, color=D_Reduction, linetype=Clustering)) + geom_smooth(se=F) + ggtitle("NN test accuracy with dimensionality reduction and clustering")
+# p <- ggplot() + geom_smooth(data=exp5.base, aes(x=Iteration, y=val, color=Clustering), se=F) + geom_smooth(data=exp5.alg, aes(x=Iteration, y=Accuracy, color=DimensionalityReduction, linetype=Clustering), se=F)
+p
+```
