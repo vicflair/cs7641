@@ -38,7 +38,7 @@ def exp1(data_class, K=7):
     # How good are the clusters?
     print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, Y))
     print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, Y))
-    #print 'Silhouette: {}'.format(metrics.silhouette_score(X, km.labels_))
+    print 'Silhouette: {}'.format(metrics.silhouette_score(X, km.labels_))
 
     # Find EM clusters
     print '-'*20 + ' EM ' + '-'*20
@@ -58,7 +58,7 @@ def exp1(data_class, K=7):
     # How good are the clusters?
     print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, Y))
     print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, Y))
-    #print 'Silhouette: {}'.format(metrics.silhouette_score(X, Y))
+    print 'Silhouette: {}'.format(metrics.silhouette_score(X, Y))
 
 
 def plot1(f1=13, f2=15):
@@ -69,7 +69,8 @@ def plot1(f1=13, f2=15):
         km, data, X, Y = pickle.load(f)
 
     # Plot K-means clusters
-    colors = plt.cm.rainbow(np.linspace(0, 1, len(km.cluster_centers_)))
+    #colors = plt.cm.rainbow(np.linspace(0, 1, len(km.cluster_centers_)))
+    colors = plt.cm.rainbow(np.linspace(0, 1, data.n_class))
     shapes = ["o", "v", "s", "p", "*", "x", "+"]
     shapes = ["o"]*7
     for i in range(data.n_class):
@@ -87,10 +88,10 @@ def plot1(f1=13, f2=15):
 
     # Plot EM clusters
     for i in range(data.n_class):
-        msk = Y == i
-        plt.scatter(data.train.X[msk, f1], data.train.X[msk, f2], color=colors[i])
-        #plt.scatter(em.means_[i, f1], em.means_[i, f2],
-        #            color=colors[i], marker="s", edgecolor="black", s=128) 
+        for j in range(len(em.means_)):
+            msk = (data.train.Y == i) & (Y == j)
+            plt.scatter(data.train.X[msk, f1], data.train.X[msk, f2], 
+                        color=colors[i], marker=shapes[j])
     plt.title("EM")
     plt.show()
 
@@ -181,7 +182,10 @@ def plot2(f1=0, f2=1):
         pca, data, X = pickle.load(f)
 
     # Plot PCA
-    plt.scatter(X[:, f1], X[:, f2], color="green")
+    colors = plt.cm.rainbow(np.linspace(0, 1, data.n_class))
+    for i in range(data.n_class):
+        msk = data.train.Y == i
+        plt.scatter(X[msk, f1], X[msk, f2], color=colors[i])
     plt.title("PCA")
     plt.show()
 
@@ -191,7 +195,9 @@ def plot2(f1=0, f2=1):
         ica, data, X = pickle.load(f)
 
     # Plot ICA
-    plt.scatter(X[:, f1], X[:, f2], color="green")
+    for i in range(data.n_class):
+        msk = data.train.Y == i
+        plt.scatter(X[msk, f1], X[msk, f2], color=colors[i])
     plt.title("ICA")
     plt.show()
 
@@ -201,8 +207,10 @@ def plot2(f1=0, f2=1):
         rca, data, X = pickle.load(f)
 
     # Plot RCA
-    plt.scatter(X[:, f1], X[:, f2], color="green")
-    plot.title("RCA")
+    for i in range(data.n_class):
+        msk = data.train.Y == i
+        plt.scatter(X[msk, f1], X[msk, f2], color=colors[i])
+    plt.title("RCA")
     plt.show()
 
     # Load LDA results
@@ -215,7 +223,7 @@ def plot2(f1=0, f2=1):
     for i in range(data.n_class):
         msk = data.train.Y == i
         plt.scatter(X[msk, f1], X[msk, f2], color=colors[i])
-    plot.title("LDA")
+    plt.title("LDA")
     plt.show()
 
 
@@ -283,7 +291,7 @@ def exp3(data_class, N=6, K=7):
             # How good are the clusters?
             print 'Homogeneity: {}'.format(metrics.homogeneity_score(data.train.Y, C))
             print 'Completeness: {}'.format(metrics.completeness_score(data.train.Y, C))
-
+            print 'Silhouette: {}'.format(metrics.silhouette_score(X, C))
 
 def plot3(f1=0, f2=1):
     """Plot results for experiment 3."""
@@ -465,7 +473,7 @@ def main():
     print '#'*20
 
     print '### Alertness dataset ###'
-    exp4(Segmentation)
+    exp4(Alertness)
     print '\n'*2
 
     # Run experiment 5 on one dataset from HW#1
@@ -474,7 +482,7 @@ def main():
     print '#'*20
 
     print '### Alertness dataset ###' 
-    exp5(Segmentation)
+    exp5(Alertness)
 
 
 if __name__ == "__main__":
