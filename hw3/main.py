@@ -472,8 +472,8 @@ def main():
     print exp4.__doc__
     print '#'*20
 
-    print '### Alertness dataset ###'
-    exp4(Alertness)
+    print '### Segmentation dataset ###'
+    exp4(Segmenation)
     print '\n'*2
 
     # Run experiment 5 on one dataset from HW#1
@@ -481,8 +481,8 @@ def main():
     print exp5.__doc__
     print '#'*20
 
-    print '### Alertness dataset ###' 
-    exp5(Alertness)
+    print '### Segmentation dataset ###' 
+    exp5(Segmentation)
 
 
 if __name__ == "__main__":
