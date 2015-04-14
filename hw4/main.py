@@ -141,19 +141,22 @@ class Maze(object):
                 for ns in next_states:
                     T[a, current_state, ns] += 0.25
 
-        # "Reset" to initial state when reaching goal or meeting minotaur.
+        # "Reset" to initial state when meeting minotaur.
         initial_state = self.global_state(self.theseus, self.minotaur)
-        # All states where Theseus and minotaur are co-located
         for p in pos:
+            # All states where Theseus and minotaur are co-located
             current_state = self.global_state(p, p)
 
-            # Reset to initial state is guaranateed
+            # Reset to initial state after minotaur is guaranteed
             T[:, current_state, :] = 0
             T[:, current_state, initial_state] = 1
 
-        # Next state after goal is always initial state, i.e. reset
-        T[:, self.goal, :] = 0
-        T[:, self.goal, initial_state] = 1
+            # All states where Theseus is at the goal
+            goal_state = self.global_state(self.goal, p)
+
+            # Reset to initial state after goal is guaranteed
+            T[:, goal_state, :] = 0
+            T[:, goal_state, initial_state] = 1
 
         # Confirm stochastic matrices
         for a in range(4):
@@ -183,16 +186,20 @@ class Maze(object):
         # Optimal action for an adjacent position is the opposite of the
         # action which led from the goal to the adjacent position. E.g, if
         # "South" led to position X, then optimal action for X is "North".
-        penultimate = [(s, (a + 2) % 4)
-                       for a, s in enumerate(self.get_moves(self.goal))
-                       if s != self.goal]
+        # penultimate = [(s, (a + 2) % 4)
+        #                for a, s in enumerate(self.get_moves(self.goal))
+        #                if s != self.goal]
 
         # Reward for taking a goal-reaching action, no matter where the
         # minotaur is going to be. Do not consider case where minotaur
         # sits at goal, or collides with Theseus.
-        for adj, a_star in penultimate:
-            for minotaur in pos:
-                R[self.global_state(adj, minotaur), a_star] = self.rval[0]
+        # for adj, a_star in penultimate:
+        #     for minotaur in pos:
+        #         R[self.global_state(adj, minotaur), a_star] = self.rval[0]
+
+        # Reward for being in the goal state, no matter where the minotaur is.
+        for p in pos:
+            R[self.global_state(self.goal, p), :] = self.rval[0]
 
         # Penalty for Theseus sharing the same state as the minotaur, no
         # matter what action is taken next :(
@@ -242,9 +249,26 @@ class Maze(object):
         global_state = state1 * num_local_states + state2
         return global_state
 
+    def get_pos(self, state):
+        """Recover pair of positions from global state."""
+        # Get local states
+        num_local_states = (self.X * self.Y)
+        state2 = state % num_local_states
+        state1 = (state - state1) / num_local_states
+
+        # Convert local states to positions
+        pos1 = (0, 0)
+        pos1[1] = state1 % self.Y
+        pos1[0] = (state1 - pos1[1]) / self.Y
+
+        pos2 = (0, 0)
+        pos2[1] = state2 % self.Y
+        pos2[0] = (state2 - pos2[1]) / self.Y
+
+        return pos1, pos2
 
     def visualize(self, state):
-        pass
+        print 1
 
     def visualize_policy(self, state, policy):
         pass
@@ -260,6 +284,18 @@ class Maze(object):
         total = (height ** 2) * (width ** 2)  # Expected state size
         assert len(set(global_states)) == total
         assert set(global_states).difference(set(range(total))) == set()
+
+
+def mini_maze():
+    """Creates toy version of the Maze MDP."""
+    maze = np.asarray([[0, 0],
+                       [0, 1]])
+    goal = (0, 0)
+    theseus = (0, 1)
+    minotaur = (1, 0)
+    M = Maze(maze=maze, goal=goal, theseus=theseus, minotaur=minotaur)
+
+    return M
 
 
 def unit_test_Maze():
@@ -285,9 +321,9 @@ def example():
     print viter.policy
 
 
-def solve_stocks():
+def solve_stocks(N=7):
     """Solve the Stocks MDP."""
-    tmp = Stocks()
+    tmp = Stocks(N)
     discount = 0.9
 
     T = tmp.transitions()
@@ -305,26 +341,27 @@ def solve_stocks():
     viter = ValueIteration(T, R, discount)
     viter.run()
     print "\nValue iteration: {}".format(viter.policy)
+    print "# of iterations: {}".format(viter.iter)
+    print "Execution time: {}".format(viter.time)
 
     piter = PolicyIteration(T, R, discount)
     piter.run()
     print "\nPolicy iteration: {}".format(piter.policy)
+    print "# of iterations: {}".format(piter.iter)
+    print "Execution time: {}".format(piter.time)
 
-    qlearn = QLearning(T, R, discount, n_iter=10000)
+    qlearn = QLearning(T, R, discount, n_iter=50000)
     qlearn.run()
     print "\nQ-learning: {}".format(qlearn.policy)
     print "\nQ: \n{}".format(qlearn.Q)
+    print "# of iterations: {}".format(qlearn.max_iter)
+    print "Execution time: {}".format(qlearn.time)
+
+    return viter, piter, qlearn
 
 
-def solve_mini_maze():
-    """Solve miniature Maze MDP."""
-    maze = np.asarray([[0, 0],
-                       [0, 1]])
-    goal = (0, 0)
-    theseus = (0, 1)
-    minotaur = (1, 0)
-
-    M = Maze(maze=maze, goal=goal, theseus=theseus, minotaur=minotaur)
+def solve_maze():
+    M = Maze()
     T = M.transitions()
     R = M.rewards()
     discount = 0.9
@@ -332,15 +369,73 @@ def solve_mini_maze():
     viter = ValueIteration(T, R, discount)
     viter.run()
     print "\nValue iteration: {}".format(viter.policy)
+    print "# of iterations: {}".format(viter.iter)
+    print "Execution time: {}".format(viter.time)
 
-    piter = PolicyIteration(T, R, discount)
+    piter = PolicyIteration(T, R, discount, max_iter=2000)
     piter.run()
     print "\nPolicy iteration: {}".format(piter.policy)
+    print "# of iterations: {}".format(piter.iter)
+    print "Execution time: {}".format(piter.time)
 
-    qlearn = QLearning(T, R, discount, n_iter=10000)
+    qlearn = QLearning(T, R, discount, n_iter=50000)
     qlearn.run()
     print "\nQ-learning: {}".format(qlearn.policy)
-    print "\nQ: \n{}".format(qlearn.Q)
+    print "# of iterations: {}".format(qlearn.max_iter)
+    print "Execution time: {}".format(qlearn.time)
+
+    return viter, piter, qlearn
+
+
+def solve_mini_maze():
+    """Solve miniature Maze MDP."""
+    M = mini_maze()
+    T = M.transitions()
+    R = M.rewards()
+    discount = 0.9
+
+    viter = ValueIteration(T, R, discount)
+    viter.run()
+    print "\nValue iteration: {}".format(viter.policy)
+    print "# of iterations: {}".format(viter.iter)
+    print "Execution time: {}".format(viter.time)
+
+    piter = PolicyIteration(T, R, discount, max_iter=2000)
+    piter.run()
+    print "\nPolicy iteration: {}".format(piter.policy)
+    print "# of iterations: {}".format(piter.iter)
+    print "Execution time: {}".format(piter.time)
+
+    qlearn = QLearning(T, R, discount, n_iter=50000)
+    qlearn.run()
+    print "\nQ-learning: {}".format(qlearn.policy)
+    print "# of iterations: {}".format(qlearn.max_iter)
+    print "Execution time: {}".format(qlearn.time)
+
+    return viter, piter, qlearn
+
+
+def simulate_policy(alg, mdp):
+    T = mdp.transitions()
+    R = mdp.rewards()
+    P = alg.policy
+    # random initial state
+    state_space = range(T[0].shape[0])
+    state = np.random.randint(0, T[0].shape[0])
+
+    state_sequence = [state]
+    total_reward = []
+    for i in range(10000):
+        # Take action according to policy
+        action = P[state]
+        # Get reward associated with state and action
+        reward = R[state, action]
+        total_reward.append(reward)
+        # Next state
+        state = np.random.choice(state_space, p=T[action][state, :])
+        state_sequence.append(state)
+
+    return np.mean(total_reward)
 
 
 def main():
