@@ -325,18 +325,8 @@ def solve_stocks(N=7):
     """Solve the Stocks MDP."""
     tmp = Stocks(N)
     discount = 0.9
-
     T = tmp.transitions()
-    print "\nAction: Buy"
-    print T[0]
-    print "\nAction: Hold"
-    print T[1]
-    print "\nAction: Sell"
-    print T[2]
-
     R = tmp.rewards()
-    print "\nRewards"
-    print R
 
     viter = ValueIteration(T, R, discount)
     viter.run()
@@ -350,7 +340,7 @@ def solve_stocks(N=7):
     print "# of iterations: {}".format(piter.iter)
     print "Execution time: {}".format(piter.time)
 
-    qlearn = QLearning(T, R, discount, n_iter=50000)
+    qlearn = QLearning(T, R, discount, n_iter=200000)
     qlearn.run()
     print "\nQ-learning: {}".format(qlearn.policy)
     print "\nQ: \n{}".format(qlearn.Q)
@@ -435,12 +425,26 @@ def simulate_policy(alg, mdp):
         state = np.random.choice(state_space, p=T[action][state, :])
         state_sequence.append(state)
 
-    return np.mean(total_reward)
+    return total_reward, state_sequence
 
 
 def main():
     """Run everything."""
-    solve_mini_maze()
+    mdps = [Stocks(), mini_maze(), Maze()]
+    mdp_names = ["Stocks MDP", "Mini maze MDP", "Theseus and the Minotaur MDP"]
+    solvers = [solve_stocks, solve_mini_maze, solve_maze]
+    alg_names = ("Value iteration", "Policy iteration", "Q-Learning")
+
+    # For all MDP problems
+    for mdp, mdp_name, solver in zip(mdps, mdp_names, solvers):
+        print "\n" + mdp_name
+        # Solve using 3 algorithms
+        algs = solver()
+        for alg, alg_name in zip(algs, alg_names):
+            rewards, states = simulate_policy(alg, mdp)
+            print alg_name
+            print "Average reward: {}".format(np.mean(rewards))
+
 
 if __name__ == "__main__":
     main()
