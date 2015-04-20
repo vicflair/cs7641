@@ -254,18 +254,18 @@ class Maze(object):
         # Get local states
         num_local_states = (self.X * self.Y)
         state2 = state % num_local_states
-        state1 = (state - state1) / num_local_states
+        state1 = (state - state2) / num_local_states
 
         # Convert local states to positions
-        pos1 = (0, 0)
+        pos1 = [0, 0]
         pos1[1] = state1 % self.Y
         pos1[0] = (state1 - pos1[1]) / self.Y
 
-        pos2 = (0, 0)
+        pos2 = [0, 0]
         pos2[1] = state2 % self.Y
         pos2[0] = (state2 - pos2[1]) / self.Y
 
-        return pos1, pos2
+        return tuple(pos1), tuple(pos2)
 
     def visualize(self, state):
         print 1
@@ -343,7 +343,7 @@ def solve_stocks(N=7):
     qlearn = QLearning(T, R, discount, n_iter=200000)
     qlearn.run()
     print "\nQ-learning: {}".format(qlearn.policy)
-    print "\nQ: \n{}".format(qlearn.Q)
+    #print "\nQ: \n{}".format(qlearn.Q)
     print "# of iterations: {}".format(qlearn.max_iter)
     print "Execution time: {}".format(qlearn.time)
 
@@ -351,6 +351,7 @@ def solve_stocks(N=7):
 
 
 def solve_maze():
+    """Solves the Maze aka Theseus and the Minotaur MDP."""
     M = Maze()
     T = M.transitions()
     R = M.rewards()
@@ -368,7 +369,7 @@ def solve_maze():
     print "# of iterations: {}".format(piter.iter)
     print "Execution time: {}".format(piter.time)
 
-    qlearn = QLearning(T, R, discount, n_iter=50000)
+    qlearn = QLearning(T, R, discount, n_iter=10000)
     qlearn.run()
     print "\nQ-learning: {}".format(qlearn.policy)
     print "# of iterations: {}".format(qlearn.max_iter)
@@ -405,7 +406,8 @@ def solve_mini_maze():
     return viter, piter, qlearn
 
 
-def simulate_policy(alg, mdp):
+def simulate_policy(alg, mdp, N=100000):
+    """Simulate the results of following a policy for a MDP."""
     T = mdp.transitions()
     R = mdp.rewards()
     P = alg.policy
@@ -415,7 +417,7 @@ def simulate_policy(alg, mdp):
 
     state_sequence = [state]
     total_reward = []
-    for i in range(10000):
+    for i in range(N):
         # Take action according to policy
         action = P[state]
         # Get reward associated with state and action
@@ -426,6 +428,60 @@ def simulate_policy(alg, mdp):
         state_sequence.append(state)
 
     return total_reward, state_sequence
+
+
+def stocks_vs_state(n_states=None):
+    """Compare performance on the Stocks MDP as a function of state size."""
+    if n_states is None:
+        n_states = [7, 9, 13, 15, 17, 23, 29, 35, 41, 53, 65, 77, 89]
+
+    for N in n_states:
+        mdp = Stocks(N)
+        discount = 0.9
+        T = mdp.transitions()
+        R = mdp.rewards()
+
+        viter = ValueIteration(T, R, discount)
+        viter.run()
+        rewards, _ = simulate_policy(viter, mdp)
+        print "\nValue iteration: {}".format(viter.policy)
+        print "# of iterations: {}".format(viter.iter)
+        print "Execution time: {}".format(viter.time)
+        print "Average reward: {}".format(np.mean(rewards))
+
+        piter = PolicyIteration(T, R, discount)
+        piter.run()
+        rewards, _ = simulate_policy(piter, mdp)
+        print "\nPolicy iteration: {}".format(piter.policy)
+        print "# of iterations: {}".format(piter.iter)
+        print "Execution time: {}".format(piter.time)
+        print "Average reward: {}".format(np.mean(rewards))
+
+        qlearn = QLearning(T, R, discount, n_iter=10000)
+        qlearn.run()
+        rewards, _ = simulate_policy(piter, mdp)
+        print "\nQ-learning: {}".format(qlearn.policy)
+        print "# of iterations: {}".format(qlearn.max_iter)
+        print "Execution time: {}".format(qlearn.time)
+        print "Average reward: {}".format(np.mean(rewards))
+
+
+def qlearning_vs_iter(iters=None):
+    """Compare Q-Learning performance on the Stocks MDP as a function of
+    the number of iterations."""
+    if iters is None:
+        iters = range(100, 1000, 100)
+    mdp = Maze()
+    discount = 0.99
+    T = mdp.transitions()
+    R = mdp.rewards()
+    for num_iters in iters:
+        qlearn = QLearning(T, R, discount=discount, n_iter=num_iters)
+        qlearn.run()
+        rewards, _ = simulate_policy(qlearn, mdp, N=10000)
+        print "\nIterations: {}".format(num_iters)
+        print "Execution time: {}.".format(qlearn.time)
+        print "Average reward: {}".format(np.mean(rewards))
 
 
 def main():
